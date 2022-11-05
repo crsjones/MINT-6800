@@ -1,0 +1,139 @@
+0000                             ; *************************************************************************
+0000                             ; 
+0000                             ;       MINT Minimal Interpreter for the 6800 
+0000                             ; 
+0000                             ;       Ken Boak, John Hardy and Craig Jones. 
+0000                             ; 
+0000                             ;       GNU GENERAL PUBLIC LICENSE                   Version 3, 29 June 2007
+0000                             ; 
+0000                             ;       see the LICENSE file in this repo for more information 
+0000                             ; 
+0000                             ; *****************************************************************************
+0000                             ; 
+0000                             ; 
+0000                             ; 6850 ACIA registers
+0000                             ;----------------------
+0000                CONTROL:   EQU   $8000   ;(write) 
+0000                STATUS:   EQU   $8000   ;(read)
+0000                TDR:      EQU   $8001   ;(write)
+0000                RDR:      EQU   $8001   ;(read)
+0000                             ; 
+0000                             ; control register bits
+0000                             ;----------------------
+0000                             ; 
+0000                             ;clock divisor
+0000                             ; 
+0000                MRESET:   EQU   $03   ;master reset the ACIA
+0000                CLKDIV_0:   EQU   $00   ;CLOCK/1
+0000                CLKDIV_16:   EQU   $01   ;CLOCK/16
+0000                CLKDIV_64:   EQU   $02   ;CLOCK/64
+0000                             ; 
+0000                             ; format select
+0000                             ; 
+0000                F7E2:     EQU   $00   ;7 data bits, EVEN parity, 2 stop bits (1+7+1+2= 11 bits)
+0000                F7O2:     EQU   $04   ;7 data bits, ODD parity, 2 stop bits (1+7+1+2= 11 bits)
+0000                F7E1:     EQU   $08   ;7 data bits, EVEN parity, 1 stop bit (1+7+1+1= 10 bits)
+0000                F7O1:     EQU   $0C   ;7 data bits, ODD parity, 1 stop bit (1+7+1+1= 10 bits)
+0000                F8N2:     EQU   $10   ;8 data bits, NO parity, 2 stop bits (1+8+0+2= 11 bits)
+0000                F8N1:     EQU   $14   ;8 data bits, NO parity, 1 stop bit (1+8+0+1= 10 bits)
+0000                F8E1:     EQU   $18   ;8 data bits, EVEN parity, 1 stop bit (1+8+1+1= 11 bits)
+0000                F8O1:     EQU   $1C   ;8 data bits, ODD parity,1 stop bit (1+8+1+1= 11 bits)
+0000                             ; 
+0000                             ; transmitter control
+0000                             ; 
+0000                RTSLID:   EQU   $00   ;RTS LOW, transmit interrupt disabled
+0000                RTSLIE:   EQU   $20   ;RTS LOW, transmit interrupt enabled
+0000                RTSHID:   EQU   $40   ;RTS HIGH, transmit interrupt disabled
+0000                RTSLIDB:   EQU   $60   ;RTS LOW, transmit interrupt disabled and "break" transmitted
+0000                             ; 
+0000                             ; receiver interrupt
+0000                             ; 
+0000                RIE:      EQU   $80   ;receiver interrupt enabled
+0000                             ; 
+0000                             ; status register bits
+0000                             ;---------------------
+0000                RDRF:     EQU   0   ;receive data register full
+0000                TDRE:     EQU   1   ;transmit data register empty
+0000                DCD:      EQU   2   ;data carrier detect
+0000                CTS:      EQU   3   ;clear to send
+0000                FE:       EQU   4   ;framing error
+0000                OVRN:     EQU   5   ;overrun
+0000                PE:       EQU   6   ;parity error
+0000                IRQ:      EQU   7   ;interrupt request
+0000                             ; 
+0000                             ; initialise ACIA
+0000                             ;----------------
+0000                INITIALISESERIAL:      
+0000   86 03                  LDAA   #MRESET   
+0002   B7 80 00               STAA   CONTROL   ;reset the ACIA
+0005   01                     NOP      
+0006   01                     NOP      
+0007   01                     NOP      
+0008                             ;initialise ACIA  8 bit word, No parity 2 stop divide by 64 for 115200 baud
+0008   86 12                  LDAA   #RTSLID+F8N2+CLKDIV_64   
+000A   B7 80 00               STAA   CONTROL   
+000D   39                     RTS      
+000E                             ; 
+000E                             ; transmit a character in a
+000E                             ;--------------------------
+000E                TXCHAR:      
+000E   36                     PSHA      ;save the character for later
+000F                TXCHAR1:      
+000F   B6 80 00               LDAA   STATUS   ;get the ACIA status
+0012   85 01                  BITA   #TDRE   ;bit  TDRE,a is the TDRE bit high?
+0014   27 F9                  BEQ   TxChar1   ;no, the TDR is not empty
+0016   32                     PULA      ;yes, get the character back
+0017   B7 80 01               STAA   TDR   ;and put it in the TDR
+001A   39                     RTS      
+001B                             ; 
+001B                             ; receive  a character in a
+001B                             ;---------------------------------
+001B                RXCHAR:      
+001B   B6 80 00               LDAA   STATUS   ;get the ACIA status
+001E   85 00                  BITA   #RDRF   ;bit   RDRF,a is the RDRF bit high?
+0020   27 F9                  BEQ   RxChar   ;no, the RDR is empty
+0022   B6 80 01               LDAA   RDR   ;yes, read the received char
+0025   39                     RTS      
+
+
+CONTROL:            8000 DEFINED AT LINE 16
+                    > USED AT LINE 68
+                    > USED AT LINE 74
+STATUS:             8000 DEFINED AT LINE 17
+                    > USED AT LINE 82
+                    > USED AT LINE 92
+TDR:                8001 DEFINED AT LINE 18
+                    > USED AT LINE 86
+RDR:                8001 DEFINED AT LINE 19
+                    > USED AT LINE 95
+MRESET:             0003 DEFINED AT LINE 26
+CLKDIV_0:           0000 DEFINED AT LINE 27
+CLKDIV_16:          0001 DEFINED AT LINE 28
+CLKDIV_64:          0002 DEFINED AT LINE 29
+F7E2:               0000 DEFINED AT LINE 33
+F7O2:               0004 DEFINED AT LINE 34
+F7E1:               0008 DEFINED AT LINE 35
+F7O1:               000C DEFINED AT LINE 36
+F8N2:               0010 DEFINED AT LINE 37
+F8N1:               0014 DEFINED AT LINE 38
+F8E1:               0018 DEFINED AT LINE 39
+F8O1:               001C DEFINED AT LINE 40
+RTSLID:             0000 DEFINED AT LINE 44
+RTSLIE:             0020 DEFINED AT LINE 45
+RTSHID:             0040 DEFINED AT LINE 46
+RTSLIDB:            0060 DEFINED AT LINE 47
+RIE:                0080 DEFINED AT LINE 51
+RDRF:               0000 DEFINED AT LINE 55
+TDRE:               0001 DEFINED AT LINE 56
+DCD:                0002 DEFINED AT LINE 57
+CTS:                0003 DEFINED AT LINE 58
+FE:                 0004 DEFINED AT LINE 59
+OVRN:               0005 DEFINED AT LINE 60
+PE:                 0006 DEFINED AT LINE 61
+IRQ:                0007 DEFINED AT LINE 62
+INITIALISESERIAL:   0000 DEFINED AT LINE 66
+TXCHAR:             000E DEFINED AT LINE 79
+TXCHAR1:            000F DEFINED AT LINE 81
+                    > USED AT LINE 84
+RXCHAR:             001B DEFINED AT LINE 91
+                    > USED AT LINE 94
