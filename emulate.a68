@@ -25,10 +25,15 @@ RAMSTART    .EQU $0000
 
 loop:   ldaa  #'a'
         jsr   TxChar
-        ldab  #$ff
-loop1:  decb           
+;Delay so we don't fill screen
+
+        ldaa  #$ff
+loop2   ldab  #$ff
+loop1   decb
         bne   loop1
-        bra   loop
+        deca
+        bne   loop2
+        bra   loop          ;Done the delay, send another char
 
 .include "Char-6850.a68"
 
